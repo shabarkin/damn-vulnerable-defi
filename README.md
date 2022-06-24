@@ -8,6 +8,10 @@ Featuring flash loans, price oracles, governance, NFTs, lending pools, smart con
 
 Visit [damnvulnerabledefi.xyz](https://damnvulnerabledefi.xyz)
 
+## Solutions 
+
+Visit [Shabarkin Notion](https://shabarkin.notion.site/Damn-Vulnerable-DeFi-dbd0ae1c6a9b4d8d8f662a70eb20b1aa)
+
 ## Disclaimer
 
 All Solidity code, practices and patterns in this repository are DAMN VULNERABLE and for educational purposes only.
