@@ -10,7 +10,7 @@ Visit [damnvulnerabledefi.xyz](https://damnvulnerabledefi.xyz)
 
 ## Solutions 
 
-Visit [Shabarkin Notion](https://shabarkin.notion.site/Damn-Vulnerable-DeFi-dbd0ae1c6a9b4d8d8f662a70eb20b1aa)
+Visit [Shabarkin Notion](https://shabarkin.notion.site/Damn-Vulnerable-DeFi-CTF-52e77138035649aca42cfce027f6d794)
 
 ## Disclaimer
 
